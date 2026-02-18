@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Path Infinite</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1e1f24">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+:root{
+ --bg:#f5f7fb;
+ --panel:#eef1f7;
+ --cardFront:#fff9c4;
+ --cardBack:#fff176;
+ --text:#000;
+
+ /* 기본 (데스크탑) */
+ --slotW:110px;
+ --slotH:150px;
+}
+
+/* 📱 모바일 */
+@media (max-width:600px){
+ :root{
+  --slotW:18vw;
+  --slotH:calc(var(--slotW)*1.35);
+ }
+}
+
+/* 📟 아이패드 */
+@media (min-width:601px) and (max-width:1024px){
+ :root{
+  --slotW:95px;
+  --slotH:130px;
+ }
+}
+
+body.dark{
+ --bg:#1e1f24;
+ --panel:#2a2c33;
+ --cardFront:#3a3d45;
+ --cardBack:#50535c;
+ --text:#eee;
+}
+
+body{
+ font-family:Arial;
+ margin:0;
+ padding:10px;
+ text-align:center;
+ background:var(--bg);
+ color:var(--text);
+}
+
+h2{margin-top:0}
+
+.tabs{
+ display:flex;
+ gap:6px;
+ justify-content:center;
+ margin-bottom:10px;
+ flex-wrap:wrap;
+}
+
+.tab{
+ padding:8px 12px;
+ border-radius:8px;
+ background:#ddd;
+ cursor:pointer;
+ font-size:14px;
+}
+
+.tab.active{background:#333;color:#fff}
+
+.panel{display:none}
+.panel.active{display:block}
+
+.grid{
+ display:flex;
+ flex-direction:column-reverse;
+ align-items:center;
+ margin-top:10px;
+}
+
+.row{display:flex;justify-content:center}
+
+.slot{
+ width:var(--slotW);
+ height:var(--slotH);
+ margin:4px;
+ border-radius:12px;
+ border:1px dashed #bbb;
+ background:var(--panel);
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ flex-direction:column;
+}
+
+.card{width:100%;height:100%;perspective:600px;position:relative}
+.card-inner{width:100%;height:100%;position:absolute;transition:.6s;transform-style:preserve-3d}
+
+.card-front,.card-back{
+ position:absolute;
+ width:100%;
+ height:100%;
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ border-radius:12px;
+ padding:4px;
+ text-align:center;
+ backface-visibility:hidden;
+ font-weight:bold;
+ font-size:clamp(10px,2.5vw,14px);
+}
+
+.card-front{background:var(--cardFront);border:1px solid #f0e68c}
+.card-back{background:var(--cardBack);transform:rotateY(180deg)}
+
+.btnRow{display:flex;gap:3px;margin-top:2px}
+button{padding:3px 6px;border:none;border-radius:6px;cursor:pointer;font-size:12px}
+input,select{padding:6px;border-radius:6px;border:1px solid #ccc;font-size:14px}
+</style>
+</head>
+<!-- PWA 설정 -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4f46e5">
+
+<!-- iOS PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<body>
+
+<h2>🧠 Memory Path Infinite</h2>
+
+<input type="file" id="upload" accept=".xlsx">
+<button onclick="toggleDark()">🌙 다크모드</button>
+<button onclick="shuffleToggle()">🔀 랜덤</button>
+
+<div class="tabs">
+ <div class="tab active" onclick="switchTab('learn',event)">현재 학습</div>
+ <div class="tab" onclick="switchTab('sessions',event)">저장된 세션</div>
+ <div class="tab" onclick="switchTab('completed',event)">완료 단어 세션</div>
+</div>
+
+<div id="learn" class="panel active">
+ <input id="sessionName" placeholder="세션 이름">
+ <button onclick="saveSession()">현재 학습 저장</button>
+ <div class="grid" id="grid"></div>
+</div>
+
+<div id="sessions" class="panel">
+ <select id="sessionList"></select>
+ <button onclick="loadSession()">세션 불러오기</button>
+ <button onclick="deleteSession()">세션 삭제</button>
+ <button onclick="exportBackup()">전체 백업</button>
+ <button onclick="document.getElementById('importBackup').click()">백업 불러오기</button>
+ <input type="file" id="importBackup" accept=".json" style="display:none;">
+</div>
+
+<div id="completed" class="panel">
+ <input id="completedName" placeholder="완료 세션 이름">
+ <button onclick="saveCompletedSession()">완료 단어 저장</button>
+ <select id="completedList"></select>
+ <button onclick="loadCompletedSession()">완료 세션 학습</button>
+ <button onclick="deleteCompletedSession()">완료 세션 삭제</button>
+</div>
+
+<script>
+const layout=[5,5,5,5];
+const maxStep=20;
+let words=[],positions=[],completedWords=[];
+let originalWords=[],isShuffled=false;
+
+const sessionName=document.getElementById("sessionName");
+const sessionList=document.getElementById("sessionList");
+const completedName=document.getElementById("completedName");
+const completedList=document.getElementById("completedList");
+const importBackup=document.getElementById("importBackup");
+
+function toggleDark(){
+ document.body.classList.toggle("dark");
+ localStorage.setItem("darkMode",document.body.classList.contains("dark"));
+}
+
+function switchTab(id,e){
+ document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+ e.target.classList.add("active");
+ document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+}
+
+upload.addEventListener("change",e=>{
+ const file=e.target.files[0];
+ if(!file) return;
+ const reader=new FileReader();
+ reader.onload=ev=>{
+  const data=new Uint8Array(ev.target.result);
+  const wb=XLSX.read(data,{type:"array"});
+  const sheet=wb.Sheets[wb.SheetNames[0]];
+  const json=XLSX.utils.sheet_to_json(sheet);
+  words=json.map(r=>{const k=Object.keys(r);return{word:r[k[0]],meaning:r[k[1]]};});
+  originalWords=JSON.parse(JSON.stringify(words));
+  positions=words.map(()=>0);
+  completedWords=[];
+  saveState(); render();
+ };
+ reader.readAsArrayBuffer(file);
+});
+
+function moveCard(i,step){
+ if(step>0){
+  positions[i]++;
+  if(positions[i]>=maxStep){
+   const w=words[i];
+   if(!completedWords.some(c=>c.word===w.word && c.meaning===w.meaning)){
+    completedWords.push({...w});
+   }
+   positions[i]=maxStep;
+  }
+ }else{positions[i]=0;}
+ saveState(); render();
+}
+
+function render(){
+ const grid=document.getElementById("grid"); grid.innerHTML="";
+ let stepIndex=0;
+ layout.forEach(rc=>{
+  const row=document.createElement("div"); row.className="row";
+  for(let i=0;i<rc;i++){
+    const slot=document.createElement("div"); slot.className="slot";
+    const idx=positions.findIndex(p=>p===stepIndex);
+    const w=idx!==-1 && positions[idx]<maxStep ? words[idx] : null;
+    if(w){
+      const card=document.createElement("div"); card.className="card";
+      const inner=document.createElement("div"); inner.className="card-inner";
+      const f=document.createElement("div"); f.className="card-front"; f.innerText=w.word;
+      const b=document.createElement("div"); b.className="card-back"; b.innerText=w.meaning;
+      inner.append(f,b); card.appendChild(inner); slot.appendChild(card);
+      card.onclick=()=>inner.style.transform=inner.style.transform==="rotateY(180deg)"?"":"rotateY(180deg)";
+      let startX=0;
+      card.addEventListener("touchstart",e=>startX=e.touches[0].clientX);
+      card.addEventListener("touchend",e=>{
+        const diff=e.changedTouches[0].clientX-startX;
+        if(diff>40) moveCard(idx,1);
+        if(diff<-40) moveCard(idx,-1);
+      });
+      const btnRow=document.createElement("div"); btnRow.className="btnRow";
+      const ok=document.createElement("button"); ok.textContent="✔️"; ok.onclick=e=>{e.stopPropagation();moveCard(idx,1);};
+      const no=document.createElement("button"); no.textContent="❌"; no.onclick=e=>{e.stopPropagation();moveCard(idx,-1);};
+      btnRow.append(ok,no); slot.appendChild(btnRow);
+    }
+    row.appendChild(slot); stepIndex++;
+  }
+  grid.appendChild(row);
+});
+}
+
+function saveState(){
+ localStorage.setItem("memoryPathState",JSON.stringify({words,positions,completedWords,originalWords,isShuffled}));
+}
+
+function saveSession(){
+ const name=sessionName.value.trim();
+ if(!name) return alert("세션 이름 입력");
+ const sessions=JSON.parse(localStorage.getItem("sessions")||"{}");
+ if(sessions[name] && !confirm("같은 이름 존재. 덮어쓰기?")) return;
+ sessions[name]={words,positions,completedWords};
+ localStorage.setItem("sessions",JSON.stringify(sessions));
+ loadSessionList(); alert("세션 저장 완료");
+}
+
+function loadSession(){
+ const name=sessionList.value;
+ const sessions=JSON.parse(localStorage.getItem("sessions")||"{}");
+ if(!sessions[name]) return;
+ words=sessions[name].words; positions=sessions[name].positions; completedWords=sessions[name].completedWords;
+ render();
+}
+
+function deleteSession(){
+ const name=sessionList.value;
+ const sessions=JSON.parse(localStorage.getItem("sessions")||"{}");
+ delete sessions[name]; localStorage.setItem("sessions",JSON.stringify(sessions));
+ loadSessionList();
+}
+
+function loadSessionList(){
+ const sessions=JSON.parse(localStorage.getItem("sessions")||"{}");
+ sessionList.innerHTML="";
+ Object.keys(sessions).forEach(k=>{
+  const opt=document.createElement("option"); opt.value=k; opt.textContent=k; sessionList.appendChild(opt);
+ });
+}
+
+function saveCompletedSession(){
+ const name=completedName.value.trim();
+ if(!completedWords.length) return alert("완료 단어 없음");
+ if(!name) return alert("세션 이름 입력");
+ const sessions=JSON.parse(localStorage.getItem("completedSessions")||"{}");
+ if(sessions[name] && !confirm("같은 이름 존재. 덮어쓰기?")) return;
+ sessions[name]={words:completedWords,positions:completedWords.map(()=>0)};
+ localStorage.setItem("completedSessions",JSON.stringify(sessions));
+ loadCompletedList(); alert("완료 세션 저장됨");
+}
+
+function loadCompletedSession(){
+ const name=completedList.value;
+ const sessions=JSON.parse(localStorage.getItem("completedSessions")||"{}");
+ if(!sessions[name]) return;
+ words=sessions[name].words; positions=sessions[name].positions; completedWords=[];
+ render();
+}
+
+function deleteCompletedSession(){
+ const name=completedList.value;
+ const sessions=JSON.parse(localStorage.getItem("completedSessions")||"{}");
+ delete sessions[name]; localStorage.setItem("completedSessions",JSON.stringify(sessions));
+ loadCompletedList();
+}
+
+function loadCompletedList(){
+ const sessions=JSON.parse(localStorage.getItem("completedSessions")||"{}");
+ completedList.innerHTML="";
+ Object.keys(sessions).forEach(k=>{
+  const opt=document.createElement("option"); opt.value=k; opt.textContent=k; completedList.appendChild(opt);
+ });
+}
+
+function shuffleToggle(){
+ if(!words.length) return;
+ words=isShuffled?JSON.parse(JSON.stringify(originalWords)):words.sort(()=>Math.random()-0.5);
+ isShuffled=!isShuffled; positions=words.map(()=>0); render();
+}
+
+function exportBackup(){
+ const backupData={
+  sessions:JSON.parse(localStorage.getItem("sessions")||"{}"),
+  completedSessions:JSON.parse(localStorage.getItem("completedSessions")||"{}")
+ };
+ const blob=new Blob([JSON.stringify(backupData,null,2)],{type:"application/json"});
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download="MemoryPath_Backup.json";
+ a.click();
+}
+
+importBackup.addEventListener("change",e=>{
+ const file=e.target.files[0]; if(!file) return;
+ const reader=new FileReader();
+ reader.onload=ev=>{
+  try{
+   const data=JSON.parse(ev.target.result);
+   if(data.sessions) localStorage.setItem("sessions",JSON.stringify(data.sessions));
+   if(data.completedSessions) localStorage.setItem("completedSessions",JSON.stringify(data.completedSessions));
+   alert("백업 불러오기 완료");
+   loadSessionList(); loadCompletedList();
+  }catch{alert("파일 형식 오류");}
+ };
+ reader.readAsText(file);
+});
+
+window.onload=()=>{
+ const saved=localStorage.getItem("memoryPathState");
+ if(saved){
+  const s=JSON.parse(saved);
+  words=s.words||[]; positions=s.positions||[];
+  completedWords=s.completedWords||[]; originalWords=s.originalWords||[];
+ }
+ if(localStorage.getItem("darkMode")==="true"){document.body.classList.add("dark");}
+ render(); loadSessionList(); loadCompletedList();
+};
+
+if("serviceWorker" in navigator){
+ navigator.serviceWorker.register("sw.js");
+}
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js');
+}
+</script>
+
+
+</body>
+</html>
