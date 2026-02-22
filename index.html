@@ -65,7 +65,6 @@ input,select{padding:6px;border-radius:6px;border:1px solid #ccc;font-size:14px}
 <input type="file" id="upload" accept=".xlsx">
 <button onclick="toggleDark()">🌙 다크모드</button>
 <button onclick="shuffleToggle()">🔀 랜덤</button>
-<!-- GitHub Sync -->
 <button onclick="GitHubSync.syncToGitHub()">🔼 GitHub 올리기</button>
 <button onclick="GitHubSync.syncFromGitHub()">🔽 GitHub 내려받기</button>
 <button onclick="GitHubSync.clearToken()">🔑 토큰 초기화</button>
@@ -100,7 +99,6 @@ input,select{padding:6px;border-radius:6px;border:1px solid #ccc;font-size:14px}
 </div>
 
 <script>
-/* ================= 기존 Memory Path Infinite 코드 ================= */
 const layout=[5,5,5,5]; const maxStep=20;
 let words=[],positions=[],completedWords=[];
 let originalWords=[],isShuffled=false;
@@ -111,7 +109,7 @@ const completedName=document.getElementById("completedName");
 const completedList=document.getElementById("completedList");
 const importBackup=document.getElementById("importBackup");
 
-function toggleDark(){ document.body.classList.toggle("dark"); localStorage.setItem("darkMode",document.body.classList.contains("dark")); }
+function toggleDark(){ document.body.classList.toggle("dark"); localStorage.setItem("darkMode00",document.body.classList.contains("dark")); }
 function switchTab(id,e){ document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active")); e.target.classList.add("active"); document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active")); document.getElementById(id).classList.add("active"); }
 
 upload.addEventListener("change",e=>{
@@ -168,30 +166,28 @@ function render(){
 });
 }
 
-function saveState(){ localStorage.setItem("memoryPathState",JSON.stringify({words,positions,completedWords,originalWords,isShuffled})); }
+function saveState(){ localStorage.setItem("memoryPathState00",JSON.stringify({words,positions,completedWords,originalWords,isShuffled})); }
 
-/* ================= 세션 관리 ================= */
-function saveSession(){ const name=sessionName.value.trim(); if(!name) return alert("세션 이름 입력"); const sessions=JSON.parse(localStorage.getItem("sessions")||"{}"); if(sessions[name]&&!confirm("같은 이름 존재. 덮어쓰기?")) return; sessions[name]={words,positions,completedWords}; localStorage.setItem("sessions",JSON.stringify(sessions)); loadSessionList(); alert("세션 저장 완료"); }
-function loadSession(){ const name=sessionList.value; const sessions=JSON.parse(localStorage.getItem("sessions")||"{}"); if(!sessions[name]) return; words=sessions[name].words; positions=sessions[name].positions; completedWords=sessions[name].completedWords; render(); }
-function deleteSession(){ const name=sessionList.value; const sessions=JSON.parse(localStorage.getItem("sessions")||"{}"); delete sessions[name]; localStorage.setItem("sessions",JSON.stringify(sessions)); loadSessionList(); }
-function loadSessionList(){ const sessions=JSON.parse(localStorage.getItem("sessions")||"{}"); sessionList.innerHTML=""; Object.keys(sessions).forEach(k=>{ const opt=document.createElement("option"); opt.value=k; opt.textContent=k; sessionList.appendChild(opt); }); }
-function saveCompletedSession(){ const name=completedName.value.trim(); if(!completedWords.length) return alert("완료 단어 없음"); if(!name) return alert("세션 이름 입력"); const sessions=JSON.parse(localStorage.getItem("completedSessions")||"{}"); if(sessions[name]&&!confirm("같은 이름 존재. 덮어쓰기?")) return; sessions[name]={words:completedWords,positions:completedWords.map(()=>0)}; localStorage.setItem("completedSessions",JSON.stringify(sessions)); loadCompletedList(); alert("완료 세션 저장됨"); }
-function loadCompletedSession(){ const name=completedList.value; const sessions=JSON.parse(localStorage.getItem("completedSessions")||"{}"); if(!sessions[name]) return; words=sessions[name].words; positions=sessions[name].positions; completedWords=[]; render(); }
-function deleteCompletedSession(){ const name=completedList.value; const sessions=JSON.parse(localStorage.getItem("completedSessions")||"{}"); delete sessions[name]; localStorage.setItem("completedSessions",JSON.stringify(sessions)); loadCompletedList(); }
-function loadCompletedList(){ const sessions=JSON.parse(localStorage.getItem("completedSessions")||"{}"); completedList.innerHTML=""; Object.keys(sessions).forEach(k=>{ const opt=document.createElement("option"); opt.value=k; opt.textContent=k; completedList.appendChild(opt); }); }
+function saveSession(){ const name=sessionName.value.trim(); if(!name) return alert("세션 이름 입력"); const sessions=JSON.parse(localStorage.getItem("sessions00")||"{}"); if(sessions[name]&&!confirm("같은 이름 존재. 덮어쓰기?")) return; sessions[name]={words,positions,completedWords}; localStorage.setItem("sessions00",JSON.stringify(sessions)); loadSessionList(); alert("세션 저장 완료"); }
+function loadSession(){ const name=sessionList.value; const sessions=JSON.parse(localStorage.getItem("sessions00")||"{}"); if(!sessions[name]) return; words=sessions[name].words; positions=sessions[name].positions; completedWords=sessions[name].completedWords; render(); }
+function deleteSession(){ const name=sessionList.value; const sessions=JSON.parse(localStorage.getItem("sessions00")||"{}"); delete sessions[name]; localStorage.setItem("sessions00",JSON.stringify(sessions)); loadSessionList(); }
+function loadSessionList(){ const sessions=JSON.parse(localStorage.getItem("sessions00")||"{}"); sessionList.innerHTML=""; Object.keys(sessions).forEach(k=>{ const opt=document.createElement("option"); opt.value=k; opt.textContent=k; sessionList.appendChild(opt); }); }
+function saveCompletedSession(){ const name=completedName.value.trim(); if(!completedWords.length) return alert("완료 단어 없음"); if(!name) return alert("세션 이름 입력"); const sessions=JSON.parse(localStorage.getItem("completedSessions00")||"{}"); if(sessions[name]&&!confirm("같은 이름 존재. 덮어쓰기?")) return; sessions[name]={words:completedWords,positions:completedWords.map(()=>0)}; localStorage.setItem("completedSessions00",JSON.stringify(sessions)); loadCompletedList(); alert("완료 세션 저장됨"); }
+function loadCompletedSession(){ const name=completedList.value; const sessions=JSON.parse(localStorage.getItem("completedSessions00")||"{}"); if(!sessions[name]) return; words=sessions[name].words; positions=sessions[name].positions; completedWords=[]; render(); }
+function deleteCompletedSession(){ const name=completedList.value; const sessions=JSON.parse(localStorage.getItem("completedSessions00")||"{}"); delete sessions[name]; localStorage.setItem("completedSessions00",JSON.stringify(sessions)); loadCompletedList(); }
+function loadCompletedList(){ const sessions=JSON.parse(localStorage.getItem("completedSessions00")||"{}"); completedList.innerHTML=""; Object.keys(sessions).forEach(k=>{ const opt=document.createElement("option"); opt.value=k; opt.textContent=k; completedList.appendChild(opt); }); }
 function shuffleToggle(){ if(!words.length) return; words=isShuffled?JSON.parse(JSON.stringify(originalWords)):words.sort(()=>Math.random()-0.5); isShuffled=!isShuffled; positions=words.map(()=>0); render(); }
-function exportBackup(){ const backupData={sessions:JSON.parse(localStorage.getItem("sessions")||"{}"),completedSessions:JSON.parse(localStorage.getItem("completedSessions")||"{}")}; const blob=new Blob([JSON.stringify(backupData,null,2)],{type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="MemoryPath_Backup.json"; a.click(); }
-importBackup.addEventListener("change",e=>{ const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=ev=>{ try{ const data=JSON.parse(ev.target.result); if(data.sessions)localStorage.setItem("sessions",JSON.stringify(data.sessions)); if(data.completedSessions)localStorage.setItem("completedSessions",JSON.stringify(data.completedSessions)); alert("백업 불러오기 완료"); loadSessionList(); loadCompletedList(); }catch{alert("파일 형식 오류");} }; reader.readAsText(file); });
+function exportBackup(){ const backupData={sessions:JSON.parse(localStorage.getItem("sessions00")||"{}"),completedSessions:JSON.parse(localStorage.getItem("completedSessions00")||"{}")}; const blob=new Blob([JSON.stringify(backupData,null,2)],{type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="MemoryPath_Backup.json"; a.click(); }
+importBackup.addEventListener("change",e=>{ const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=ev=>{ try{ const data=JSON.parse(ev.target.result); if(data.sessions)localStorage.setItem("sessions00",JSON.stringify(data.sessions)); if(data.completedSessions)localStorage.setItem("completedSessions00",JSON.stringify(data.completedSessions)); alert("백업 불러오기 완료"); loadSessionList(); loadCompletedList(); }catch{alert("파일 형식 오류");} }; reader.readAsText(file); });
 
-/* ================= GitHub Sync ================= */
 const GITHUB_INFO={ user:"apor76-cmyk", repo:"memory_darkdata", path:"memory_sync.json" };
 const GH_API=`https://api.github.com/repos/${GITHUB_INFO.user}/${GITHUB_INFO.repo}/contents/${GITHUB_INFO.path}`;
 const GH_RAW=`https://raw.githubusercontent.com/${GITHUB_INFO.user}/${GITHUB_INFO.repo}/main/${GITHUB_INFO.path}`;
 
-function getToken(){ let token=localStorage.getItem("GH_TOKEN"); if(!token){ token=prompt("GitHub Token 입력 (repo read/write 필요)"); if(token)localStorage.setItem("GH_TOKEN",token); } return token; }
-function clearToken(){ localStorage.removeItem("GH_TOKEN"); alert("토큰 삭제됨"); }
-function getSyncData(){ return { memoryPathState:localStorage.getItem("memoryPathState")||"{}", sessions:localStorage.getItem("sessions")||"{}", completedSessions:localStorage.getItem("completedSessions")||"{}", darkMode:localStorage.getItem("darkMode")||"false" }; }
-function applySyncData(d){ if(!d)return; if(d.memoryPathState)localStorage.setItem("memoryPathState",d.memoryPathState); if(d.sessions)localStorage.setItem("sessions",d.sessions); if(d.completedSessions)localStorage.setItem("completedSessions",d.completedSessions); if(d.darkMode)localStorage.setItem("darkMode",d.darkMode); render(); loadSessionList(); loadCompletedList(); }
+function getToken(){ let token=localStorage.getItem("GH_TOKEN00"); if(!token){ token=prompt("GitHub Token 입력 (repo read/write 필요)"); if(token)localStorage.setItem("GH_TOKEN00",token); } return token; }
+function clearToken(){ localStorage.removeItem("GH_TOKEN00"); alert("토큰 삭제됨"); }
+function getSyncData(){ return { memoryPathState:localStorage.getItem("memoryPathState00")||"{}", sessions:localStorage.getItem("sessions00")||"{}", completedSessions:localStorage.getItem("completedSessions00")||"{}", darkMode:localStorage.getItem("darkMode00")||"false" }; }
+function applySyncData(d){ if(!d)return; if(d.memoryPathState)localStorage.setItem("memoryPathState00",d.memoryPathState); if(d.sessions)localStorage.setItem("sessions00",d.sessions); if(d.completedSessions)localStorage.setItem("completedSessions00",d.completedSessions); if(d.darkMode)localStorage.setItem("darkMode00",d.darkMode); render(); loadSessionList(); loadCompletedList(); }
 
 function mergeJSON(localStr,remoteStr){ try{ const local=JSON.parse(localStr||"{}"); const remote=JSON.parse(remoteStr||"{}"); return JSON.stringify({...remote,...local}); }catch{return localStr||"{}";} }
 
@@ -229,11 +225,10 @@ async function syncToGitHub(){
 
 window.GitHubSync={ syncToGitHub, syncFromGitHub, clearToken };
 
-/* ================= 초기 로드 ================= */
 window.onload=()=>{
- const saved=localStorage.getItem("memoryPathState");
+ const saved=localStorage.getItem("memoryPathState00");
  if(saved){ const s=JSON.parse(saved); words=s.words||[]; positions=s.positions||[]; completedWords=s.completedWords||[]; originalWords=s.originalWords||[]; }
- if(localStorage.getItem("darkMode")==="true") document.body.classList.add("dark");
+ if(localStorage.getItem("darkMode00")==="true") document.body.classList.add("dark");
  render(); loadSessionList(); loadCompletedList();
  if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js"); }
 };
