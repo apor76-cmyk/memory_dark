@@ -180,7 +180,7 @@ function shuffleToggle(){ if(!words.length) return; words=isShuffled?JSON.parse(
 function exportBackup(){ const backupData={sessions:JSON.parse(localStorage.getItem("sessions00")||"{}"),completedSessions:JSON.parse(localStorage.getItem("completedSessions00")||"{}")}; const blob=new Blob([JSON.stringify(backupData,null,2)],{type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="MemoryPath_Backup.json"; a.click(); }
 importBackup.addEventListener("change",e=>{ const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=ev=>{ try{ const data=JSON.parse(ev.target.result); if(data.sessions)localStorage.setItem("sessions00",JSON.stringify(data.sessions)); if(data.completedSessions)localStorage.setItem("completedSessions00",JSON.stringify(data.completedSessions)); alert("백업 불러오기 완료"); loadSessionList(); loadCompletedList(); }catch{alert("파일 형식 오류");} }; reader.readAsText(file); });
 
-const GITHUB_INFO={ user:"apor76-cmyk", repo:"memory_darkdata", path:"memory_sync.json" };
+const GITHUB_INFO={ user:"apor76-cmyk", repo:"data", path:"data/memory_dark.json" };
 const GH_API=`https://api.github.com/repos/${GITHUB_INFO.user}/${GITHUB_INFO.repo}/contents/${GITHUB_INFO.path}`;
 const GH_RAW=`https://raw.githubusercontent.com/${GITHUB_INFO.user}/${GITHUB_INFO.repo}/main/${GITHUB_INFO.path}`;
 
